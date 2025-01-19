@@ -160,13 +160,16 @@ if __name__ == '__main__':
         else:
             loop_type = None
 
-        if loop_type not in {'asyncio', 'uvloop'}:
+        if loop_type not in {'asyncio', 'uvloop', 'leviathan'}:
             abort('unrecognized loop type: {}'.format(loop_type))
 
         if server_type not in {'aiohttp', 'httptools'}:
             abort('unrecognized server type: {}'.format(server_type))
 
-        if loop_type:
+        if loop_type == 'leviathan':
+            import leviathan
+            loop = leviathan.Loop()
+        elif loop_type:
             loop = globals()[loop_type].new_event_loop()
         else:
             loop = None

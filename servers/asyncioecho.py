@@ -89,6 +89,7 @@ async def print_debug(loop):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--uvloop', default=False, action='store_true')
+    parser.add_argument('--leviathan', default=False, action='store_true')
     parser.add_argument('--streams', default=False, action='store_true')
     parser.add_argument('--proto', default=False, action='store_true')
     parser.add_argument('--addr', default='127.0.0.1:25000', type=str)
@@ -98,6 +99,10 @@ if __name__ == '__main__':
     if args.uvloop:
         loop = uvloop.new_event_loop()
         print('using UVLoop')
+    elif args.leviathan:
+        import leviathan
+        loop = leviathan.Loop()
+        print('using Leviathan')
     else:
         loop = asyncio.new_event_loop()
         print('using asyncio loop')
@@ -120,7 +125,7 @@ if __name__ == '__main__':
             os.remove(addr)
     else:
         addr = args.addr.split(':')
-        addr[1] = int(addr[1])
+        addr[1] = int(adadr[1])
         addr = tuple(addr)
 
     print('serving on: {}'.format(addr))

@@ -26,7 +26,7 @@ server_base = ['docker', 'run', '--rm', '-t', '-p', '25000:25000',
                '-e', 'GID={}'.format(os.getegid()),
                '-v', '{_cache}:/var/lib/cache'.format(_cache=_cache),
                '-v', '{_socket}:/tmp/sockets'.format(_socket=_socket),
-               '--name', 'magicbench', 'magic/benchmark']
+               '--name', 'dolukbench', 'doluk/benchmark']
 
 python = ['vex', 'bench', 'python']
 nodejs = ['nodejs']
@@ -170,6 +170,46 @@ benchmarks = [{
     'server_address': unix_address,
     'client': unix_client,
 }, {
+    'name': 'tcpecho-leviathan-protocol',
+    'title': 'TCP echo server (leviathan)',
+    'server': python + ['/usr/src/servers/asyncioecho.py',
+                        '--addr=0.0.0.0:25000',
+                        '--proto', '--leviathan'],
+    'server_address': tcp_address,
+    'client': tcp_client,
+}, {
+    'name': 'readline-leviathan',
+    'title': 'Streams readline (leviathan)',
+    'server': python + ['/usr/src/servers/asyncioecho.py',
+                        '--addr=0.0.0.0:25000',
+                        '--streams', '--leviathan'],
+    'server_address': tcp_address,
+    'client': readline_client,
+}, {
+    'name': 'tcpecho-leviathan-sockets',
+    'title': 'TCP echo server (leviathan/sockets)',
+    'server': python + ['/usr/src/servers/asyncioecho.py',
+                        '--addr=0.0.0.0:25000',
+                        '--leviathan'],
+    'server_address': tcp_address,
+    'client': tcp_client,
+}, {
+    'name': 'unixecho-leviathan-protocol',
+    'title': 'Unix socket echo server (leviathan)',
+    'server': python + ['/usr/src/servers/asyncioecho.py',
+                        '--addr=file:/tmp/sockets/server.sock',
+                        '--proto', '--leviathan'],
+    'server_address': unix_address,
+    'client': unix_client,
+}, {
+    'name': 'unixecho-leviathan-streams',
+    'title': 'Unix socket echo server (leviathan/streams)',
+    'server': python + ['/usr/src/servers/asyncioecho.py',
+                        '--addr=file:/tmp/sockets/server.sock',
+                        '--streams', '--leviathan'],
+    'server_address': unix_address,
+    'client': unix_client,
+}, {
     'name': 'http-asyncio-aiohttp',
     'title': 'HTTP server (asyncio/aiohttp)',
     'server': python + ['/usr/src/servers/asyncio_http_server.py',
@@ -198,6 +238,22 @@ benchmarks = [{
     'title': 'HTTP server (uvloop/httptools)',
     'server': python + ['/usr/src/servers/asyncio_http_server.py',
                         '--type=uvloop+httptools',
+                        '--addr=0.0.0.0:25000'],
+    'server_address': tcp_address,
+    'client': http_client,
+}, {
+    'name': 'http-leviathan-aiohttp',
+    'title': 'HTTP server (leviathan/aiohttp)',
+    'server': python + ['/usr/src/servers/asyncio_http_server.py',
+                        '--type=leviathan+aiohttp',
+                        '--addr=0.0.0.0:25000'],
+    'server_address': tcp_address,
+    'client': http_client,
+}, {
+    'name': 'http-leviathan-httptools',
+    'title': 'HTTP server (leviathan/httptools)',
+    'server': python + ['/usr/src/servers/asyncio_http_server.py',
+                        '--type=leviathan+httptools',
                         '--addr=0.0.0.0:25000'],
     'server_address': tcp_address,
     'client': http_client,
