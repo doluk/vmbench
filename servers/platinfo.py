@@ -2,6 +2,7 @@ import json
 import os.path
 import platform
 import warnings
+import distro
 
 
 if __name__ == '__main__':
@@ -29,7 +30,7 @@ if __name__ == '__main__':
                 'functions are deprecated .*',
                 PendingDeprecationWarning,
             )
-            distname, distversion, distid = platform.dist('')
+            distname, distversion, distid = [distro.name(), distro.version(), distro.id()]
 
         distribution = '{} {}'.format(distname, distversion).strip()
 

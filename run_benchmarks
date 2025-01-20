@@ -24,11 +24,12 @@ _socket = os.path.abspath(os.path.join(_dir, 'sockets'))
 server_base = ['docker', 'run', '--rm', '-t', '-p', '25000:25000',
                '-e', 'UID={}'.format(os.geteuid()),
                '-e', 'GID={}'.format(os.getegid()),
+               '--privileged','--user',  '0:0', '--security-opt', 'apparmor=unconfined',
                '-v', '{_cache}:/var/lib/cache'.format(_cache=_cache),
                '-v', '{_socket}:/tmp/sockets'.format(_socket=_socket),
                '--name', 'dolukbench', 'doluk/benchmark']
 
-python = ['vex', 'bench', 'python']
+python = ['python3']
 nodejs = ['nodejs']
 
 echo_client = ['./echo_client', '--output-format=json']
@@ -42,7 +43,8 @@ http_client = ['./http_client', '--output-format=json',
                '--addr={}'.format(tcp_address)]
 readline_client = tcp_client + ['--mpr=5']
 
-benchmarks = [{
+benchmarks = [
+    {
     'name': 'tcpecho-gevent-sockets',
     'title': 'TCP echo server (gevent)',
     'server': python + ['/usr/src/servers/gevecho.py'],
@@ -328,7 +330,7 @@ def server_is_running():
     try:
         ret = subprocess.check_output(
                 ['docker', 'inspect', '--type=container',
-                 '--format="{{ .State.Running }}"', 'magicbench'],
+                 '--format="{{ .State.Running }}"', 'dolukbench'],
                 stderr=subprocess.DEVNULL,
                 universal_newlines=True)
 
@@ -341,7 +343,7 @@ def server_is_running():
 
 def server_container_exists():
     ret = subprocess.call(['docker', 'inspect', '--type=container',
-                           'magicbench'],
+                           'dolukbench'],
                            stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL)
     return ret == 0
@@ -350,11 +352,15 @@ def server_container_exists():
 def kill_server():
     if server_is_running():
         print('Shutting down server...')
-        subprocess.check_output(['docker', 'stop', 'magicbench'])
+        subprocess.check_output(['docker', 'stop', 'dolukbench'])
 
     if server_container_exists():
         print('Removing server container...')
-        subprocess.check_output(['docker', 'rm', 'magicbench'])
+        try:
+            subprocess.check_output(['docker', 'rm', 'dolukbench'])
+        except subprocess.CalledProcessError:
+            print("Faed to remove server container")
+            pass
 
 
 def format_report(data, target_file):
@@ -617,7 +623,13 @@ def main():
         print()
 
     if args.save_json or args.save_html:
-        info_cmd = server_base + python + ['/usr/src/servers/platinfo.py']
+        info_cmd = ['docker', 'run', '--rm', '-t', '-p', '25000:25000',
+               '-e', 'UID={}'.format(os.geteuid()),
+               '-e', 'GID={}'.format(os.getegid()),
+                    '--privileged', '--user', '0:0', '--security-opt', 'apparmor=unconfined',
+               '-v', '{_cache}:/var/lib/cache'.format(_cache=_cache),
+               '-v', '{_socket}:/tmp/sockets'.format(_socket=_socket),
+               '--name', 'dolukbenchplatinfo', 'doluk/benchmark'] + python + ['/usr/src/servers/platinfo.py']
         print('  ' + ' '.join(info_cmd))
         output = subprocess.check_output(info_cmd, universal_newlines=True)
         platform_info = json.loads(output)

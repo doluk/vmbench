@@ -130,7 +130,7 @@ def aiohttp_server(loop, addr):
     app = web.Application(loop=loop)
     app.router.add_route('GET', '/{size}', handle)
     app.router.add_route('GET', '/', handle)
-    handler = app.make_handler()
+    handler = app.make_handler(loop=loop)
     server = loop.create_server(handler, *addr)
 
     return server
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     parser.add_argument('--type', default='asyncio+aiohttp', action='store')
     parser.add_argument('--addr', default='127.0.0.1:25000', type=str)
     args = parser.parse_args()
-
+    loop = None
     if args.type:
         parts = args.type.split('+')
         if len(parts) > 1:
@@ -153,6 +153,7 @@ if __name__ == '__main__':
             server_type = parts[1]
         else:
             server_type = args.type
+            loop_type = None
 
         if server_type in {'aiohttp', 'httptools'}:
             if not loop_type:
@@ -168,7 +169,18 @@ if __name__ == '__main__':
 
         if loop_type == 'leviathan':
             import leviathan
-            loop = leviathan.Loop()
+            
+            class Test(asyncio.DefaultEventLoopPolicy):
+                def get_event_loop(self):
+                    loop = leviathan.Loop()
+                    return loop
+                
+                def new_event_loop(self):
+                    return self.get_event_loop()
+            
+            
+            asyncio.set_event_loop_policy(Test())
+            loop = asyncio.new_event_loop()
         elif loop_type:
             loop = globals()[loop_type].new_event_loop()
         else:
@@ -200,4 +212,5 @@ if __name__ == '__main__':
             loop.run_forever()
         finally:
             server.close()
-            loop.close()
+            if loop_type != 'leviathan':
+                loop.close()

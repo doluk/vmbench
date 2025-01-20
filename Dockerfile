@@ -58,22 +58,25 @@ ENV PATH=$PATH:/usr/local/zig
 # Add zig to PATH
 ENV PATH=$PATH:/usr/local/zig
 
-RUN pip3 install setuptools Cython
+RUN python3 -m pip install setuptools Cython prettytable uvloop matplotlib
+RUN pip3 install setuptools Cython prettytable uvloop matplotlib
 
-RUN git clone https://github.com/kython28/leviathan.git && cd leviathan && git checkout develop && git pull origin && python3 setup.py \
+RUN git clone https://github.com/doluk/leviathan.git -b fix/close_loop && cd leviathan && git checkout fix/close_loop && git pull origin && \
+    python3 \
+    setup.py \
     install
 
-RUN pip3 install vex
-RUN vex --python=python3 -m bench pip install -U pip
-RUN mkdir -p /var/lib/cache/pip
+
+
 
 ADD servers /usr/src/servers
 RUN cd /usr/src/servers && go mod init myapp && \
     go mod tidy && go build goecho.go &&  go build gohttp.go
-RUN vex bench pip --cache-dir=/var/lib/cache/pip \
-        install -r /usr/src/servers/requirements.txt
+RUN python3 -m pip install -r /usr/src/servers/requirements.txt
 
-RUN vex bench pip freeze -r /usr/src/servers/requirements.txt
+RUN python3 -m pip install setuptools Cython prettytable uvloop matplotlib
+RUN pip3 install setuptools Cython prettytable uvloop matplotlib
+# RUN vex bench pip freeze -r /usr/src/servers/requirements.txt
 
 EXPOSE 25000
 

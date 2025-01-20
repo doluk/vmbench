@@ -83,7 +83,7 @@ async def print_debug(loop):
     while True:
         print(chr(27) + "[2J")  # clear screen
         loop.print_debug_info()
-        await asyncio.sleep(0.5, loop=loop)
+        await asyncio.sleep(0.5)
 
 
 if __name__ == '__main__':
@@ -101,7 +101,16 @@ if __name__ == '__main__':
         print('using UVLoop')
     elif args.leviathan:
         import leviathan
-        loop = leviathan.Loop()
+    
+        class Test(asyncio.DefaultEventLoopPolicy):
+            def get_event_loop(self):
+                loop = leviathan.Loop()
+                return loop
+            def new_event_loop(self):
+                return self.get_event_loop()
+            
+        asyncio.set_event_loop_policy(Test())
+        loop = asyncio.get_event_loop()
         print('using Leviathan')
     else:
         loop = asyncio.new_event_loop()
@@ -125,7 +134,7 @@ if __name__ == '__main__':
             os.remove(addr)
     else:
         addr = args.addr.split(':')
-        addr[1] = int(adadr[1])
+        addr[1] = int(addr[1])
         addr = tuple(addr)
 
     print('serving on: {}'.format(addr))
@@ -138,11 +147,11 @@ if __name__ == '__main__':
         print('using asyncio/streams')
         if unix:
             coro = asyncio.start_unix_server(echo_client_streams,
-                                             addr, loop=loop,
+                                             addr,
                                              limit=1024 * 1024)
         else:
             coro = asyncio.start_server(echo_client_streams,
-                                        *addr, loop=loop,
+                                        *addr,
                                         limit=1024 * 1024)
         srv = loop.run_until_complete(coro)
     elif args.proto:
